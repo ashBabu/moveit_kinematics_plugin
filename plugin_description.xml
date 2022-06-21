@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<library path="lib/test_arm_moveit_inhouse_plugin">
+  <class base_class_type="kinematics::KinematicsBase" name="analytic/InHouseKinematicsPlugin"
+         type="inhouse_moveit_kinematics_plugin::TestArmKinematicsPlugin">
+    <description>InHouse MoveIt plugin for solving the kinematics analytically </description>
+  </class>
+</library>
