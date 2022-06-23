@@ -1,5 +1,5 @@
-#ifndef _INHOUSE_MOVEIT_KINEMATICS_PLUGIN_H_
-#define _INHOUSE_MOVEIT_KINEMATICS_PLUGIN_H_
+#ifndef _MOVEIT_KINEMATICS_PLUGIN_H_
+#define _MOVEIT_KINEMATICS_PLUGIN_H_
 
 #include <numeric>
 #include <ros/ros.h>
@@ -12,7 +12,7 @@
 #include <moveit_msgs/KinematicSolverInfo.h>
 #include <moveit/kinematics_base/kinematics_base.h>
 
-namespace inhouse_moveit_kinematics_plugin
+namespace moveit_kinematics_plugin
 {
 class TestKinematicsPlugin : public kinematics::KinematicsBase
 {
@@ -62,10 +62,8 @@ public:
                        std::vector<geometry_msgs::Pose>& poses) const override;
 
 private:
-    std::string name_;
     std::vector<std::string> joint_names_;
     std::vector<std::string> link_names_;
-    double a1_, a2_, a3_, a4_;  // 
 
     const robot_state::JointModelGroup* joint_model_group_;
     bool initialized_;  ///< Internal variable that indicates whether solver is configured and ready
@@ -102,4 +100,4 @@ private:
 };
 }
 
-#endif //_INHOUSE_MOVEIT_KINEMATICS_PLUGIN_H_
+#endif //_MOVEIT_KINEMATICS_PLUGIN_H_

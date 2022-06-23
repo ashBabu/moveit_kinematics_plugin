@@ -4,10 +4,9 @@ CLASS_LOADER_REGISTER_CLASS(inhouse_moveit_kinematics_plugin::TestKinematicsPlug
 
 using namespace inhouse_moveit_kinematics_plugin;
 
-TestKinematicsPlugin::TestKinematicsPlugin() : initialized_(false), name_("InHouse"), num_joints_(4)
+TestKinematicsPlugin::TestKinematicsPlugin() : initialized_(false), num_joints_(4)
 {
-    std::cout<<"Initializing IN-HOUSE-ANALYTIC-KINEMATIC-PLUGIN"<<std::endl;
-    a1_ = 0.2; a2_ = 0.25; a3_ = 0.1415; a4_ = -0.175;   // wrt base
+    std::cout<<"Initializing ANALYTIC-KINEMATIC-PLUGIN"<<std::endl;
 }
 
 TestKinematicsPlugin::~TestKinematicsPlugin()
@@ -22,7 +21,7 @@ bool TestKinematicsPlugin::initialize(const moveit::core::RobotModel& robot_mode
 {
     if (tip_frames.size() != 1)
     {
-        ROS_ERROR_NAMED(name_, "Expecting exactly one tip frame.");
+        ROS_ERROR_NAMED("my_plugin", "Expecting exactly one tip frame.");
         return false;
     }
     std::cout << "GroupName: " << group_name << " base_frmae: " << base_frame << " TipFrame: " << tip_frames[0] << std::endl;
@@ -32,14 +31,14 @@ bool TestKinematicsPlugin::initialize(const moveit::core::RobotModel& robot_mode
 //    base_frame_ = "base_link";
 
     if (!robot_model.hasLinkModel(tip_frames_[0]))
-        ROS_ERROR_STREAM_NAMED(name_, "tip frame '" << tip_frames_[0] << "' does not exist.");
+        ROS_ERROR_STREAM_NAMED("my_plugin", "tip frame '" << tip_frames_[0] << "' does not exist.");
     if (!robot_model.hasLinkModel(base_frame_))
-        ROS_ERROR_STREAM_NAMED(name_, "base_frame '" << base_frame_ << "' does not exist.");
+        ROS_ERROR_STREAM_NAMED("my_plugin", "base_frame '" << base_frame_ << "' does not exist.");
 
     joint_model_group_ = robot_model_->getJointModelGroup(group_name);
     if (!joint_model_group_)
     {
-        ROS_ERROR_STREAM_NAMED(name_, "Unknown planning group: " << group_name);
+        ROS_ERROR_STREAM_NAMED("my_plugin", "Unknown planning group: " << group_name);
         return false;
     }
     std::cout << std::endl << "Joint Model Variable Names: ------------------------------------------- " << std::endl;
@@ -49,7 +48,7 @@ bool TestKinematicsPlugin::initialize(const moveit::core::RobotModel& robot_mode
 
     // Get the dimension of the planning group
     dimension_ = joint_model_group_->getVariableCount();
-    ROS_INFO_STREAM_NAMED(name_, "Dimension planning group '"
+    ROS_INFO_STREAM_NAMED("my_plugin", "Dimension planning group '"
             << group_name << "': " << dimension_
             << ". Active Joints Models: " << joint_model_group_->getActiveJointModels().size()
             << ". Mimic Joint Models: " << joint_model_group_->getMimicJointModels().size());
@@ -79,7 +78,6 @@ bool TestKinematicsPlugin::initialize(const moveit::core::RobotModel& robot_mode
         return false;
     }
 
-//    dimension_ = joint_model_group_->getActiveJointModels().size() + joint_model_group_->getMimicJointModels().size();
     for (std::size_t i = 0; i < joint_model_group_->getJointModels().size(); ++i)
     {
         if (joint_model_group_->getJointModels()[i]->getType() == moveit::core::JointModel::REVOLUTE ||
@@ -100,22 +98,9 @@ bool TestKinematicsPlugin::initialize(const moveit::core::RobotModel& robot_mode
 
     solver_info_.link_names.push_back(getTipFrame());
     std::string ik_service_name;
-//    lookupParam("kinematics_solver_service_name", ik_service_name, std::string("solve_ik"));
     robot_state_ = std::make_shared<moveit::core::RobotState>(robot_model_);
     robot_state_->setToDefaultValues();
 
-//    // Create the ROS service client
-//    ros::NodeHandle nonprivate_handle("");
-//    ik_service_client_ = std::make_shared<ros::ServiceClient>(
-//            nonprivate_handle.serviceClient<moveit_msgs::GetPositionIK>(ik_service_name));
-/*
-
-    if (!ik_service_client_->waitForExistence(ros::Duration(0.1)))  // wait 0.1 seconds, blocking
-        ROS_WARN_STREAM_NAMED("srv",
-                              "Unable to connect to ROS service client with name: " << ik_service_client_->getService());
-    else
-        ROS_INFO_STREAM_NAMED("srv", "Service client started with ROS service name: " << ik_service_client_->getService());
-*/
 
     joint_min_.resize(solver_info_.limits.size());
     joint_max_.resize(solver_info_.limits.size());
@@ -126,24 +111,23 @@ bool TestKinematicsPlugin::initialize(const moveit::core::RobotModel& robot_mode
         joint_max_(i) = solver_info_.limits[i].max_position;
     }
 
-//    state_ = std::make_shared<moveit::core::RobotState>(robot_model_);
-    ROS_DEBUG_STREAM_NAMED(name_, "Registering joints and links");
+    ROS_DEBUG_STREAM_NAMED("my_plugin", "Registering joints and links");
     const moveit::core::LinkModel* link = robot_model_->getLinkModel(tip_frames_[0]);
     const moveit::core::LinkModel* base_link = robot_model_->getLinkModel(base_frame_);
     while (link && link != base_link)
     {
-        ROS_DEBUG_STREAM_NAMED(name_, "Link " << link->getName());
+        ROS_DEBUG_STREAM_NAMED("my_plugin", "Link " << link->getName());
         link_names_.push_back(link->getName());
         const moveit::core::JointModel* joint = link->getParentJointModel();
         if (joint->getType() != joint->UNKNOWN && joint->getType() != joint->FIXED && joint->getVariableCount() == 1)
         {
-            ROS_DEBUG_STREAM_NAMED(name_, "Adding joint " << joint->getName());
+            ROS_DEBUG_STREAM_NAMED("my_plugin", "Adding joint " << joint->getName());
             joint_names_.push_back(joint->getName());
         }
         link = link->getParentLinkModel();
     }
     initialized_ = true;
-    ROS_DEBUG_NAMED(name_, " solver initialized");
+    ROS_DEBUG_NAMED("my_plugin", " solver initialized");
     return true;
 }
 
@@ -170,18 +154,7 @@ bool TestKinematicsPlugin::getPositionFK(const std::vector<std::string> &link_na
         return false;
     }
 
-    geometry_msgs::Pose pose;
-    pose.position.x = a1_ * cos(q1) + a1_ * cos(q1 - q2) + a2_ * cos(q1 - q2 + q3) + a3_;
-    pose.position.y = a1_ * sin(q1) + a1_ * sin(q1 - q2) + a2_ * sin(q1 - q2 + q3);
-    pose.position.z = a4_ - d;
-
-    tf2::Quaternion myQuaternion;
-    myQuaternion.setRPY(0, 0, M_PI + q1 - q2 + q3);
-    pose.orientation.x = myQuaternion.getX();
-    pose.orientation.y = myQuaternion.getY();
-    pose.orientation.z = myQuaternion.getZ();
-    pose.orientation.w = myQuaternion.getW();
-    poses.push_back(pose);
+    // Implement your Forward Kinematics here
     return true;
 }
 
@@ -189,6 +162,9 @@ bool TestKinematicsPlugin::getIKSolutions(const geometry_msgs::Pose &ik_pose,
                                              std::vector<std::vector<double>> &solutions) const
 {
     /// Some solution finding details omitted
+    /// Find solution q1, q2, q3, q4 ...
+    /// std::reverse(solution.begin(), solution.end());
+    /// solutions.push_back(solution);
     if (solutions.empty())
         return false;
     else
@@ -206,12 +182,6 @@ bool TestKinematicsPlugin::getPositionIK(const geometry_msgs::Pose& ik_pose, con
                                         std::vector<double>& solution, moveit_msgs::MoveItErrorCodes& error_code,
                                         const kinematics::KinematicsQueryOptions& options) const
 {
-    std::cout << "GET POSITION IK 1" << std::endl;
-    std::cout<< " z: " << ik_pose.position.z <<
-             " x: " << ik_pose.position.x <<
-             " y: " << ik_pose.position.y <<
-             std::endl;
-
     std::vector<double> consistency_limits;
     // limit search to a single attempt by setting a timeout of zero
     return searchPositionIK(ik_pose, ik_seed_state, 0.0, consistency_limits, solution, IKCallbackFn(), error_code,
@@ -224,17 +194,15 @@ bool TestKinematicsPlugin::getPositionIK(const std::vector<geometry_msgs::Pose> 
                                             kinematics::KinematicsResult &result,
                                             const kinematics::KinematicsQueryOptions &options) const
 {
-    ROS_DEBUG_STREAM_NAMED(name_, "getPositionIK with multiple solutions");
-    std::cout << "GET POSITION IK 2" << std::endl;
     if (ik_poses.empty())
     {
-        ROS_ERROR_NAMED(name_, "ik_poses is empty");
+        ROS_ERROR_NAMED("my_plugin", "ik_poses is empty");
         result.kinematic_error = kinematics::KinematicErrors::EMPTY_TIP_POSES;
         return false;
     }
     if (ik_poses.size() > 1)
     {
-        ROS_ERROR_NAMED(name_, "ik_poses contains multiple entries, only one is allowed");
+        ROS_ERROR_NAMED("my_plugin", "ik_poses contains multiple entries, only one is allowed");
         result.kinematic_error = kinematics::KinematicErrors::MULTIPLE_TIPS_NOT_SUPPORTED;
         return false;
     }
@@ -256,11 +224,6 @@ bool TestKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose, 
                                                moveit_msgs::MoveItErrorCodes &error_code,
                                                const kinematics::KinematicsQueryOptions &options) const
 {
-    std::cout<<"In SearchPositionIK 1"<< std::endl;
-    std::cout<< " z: " << ik_pose.position.z <<
-                " x: " << ik_pose.position.x <<
-                " y: " << ik_pose.position.y <<
-                std::endl;
     std::vector<double> consistency_limits;
     return searchPositionIK(ik_pose, ik_seed_state, timeout, consistency_limits, solution,
                             IKCallbackFn(), error_code, options);
@@ -271,11 +234,6 @@ bool TestKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose, 
                                                std::vector<double> &solution, moveit_msgs::MoveItErrorCodes &error_code,
                                                const kinematics::KinematicsQueryOptions &options) const
 {
-    std::cout<<"In SearchPositionIK 2"<< std::endl;
-    std::cout<< " z: " << ik_pose.position.z <<
-                " x: " << ik_pose.position.x <<
-                " y: " << ik_pose.position.y <<
-                std::endl;
     return searchPositionIK(ik_pose, ik_seed_state, timeout, consistency_limits, solution,
                             IKCallbackFn(), error_code, options);
 }
@@ -286,11 +244,6 @@ bool TestKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose, 
                                                moveit_msgs::MoveItErrorCodes &error_code,
                                                const kinematics::KinematicsQueryOptions &options) const
 {
-    std::cout<<"In SearchPositionIK 3"<< std::endl;
-    std::cout<< " z: " << ik_pose.position.z <<
-                " x: " << ik_pose.position.x <<
-                " y: " << ik_pose.position.y <<
-                std::endl;
     std::vector<double> consistency_limits;
     return searchPositionIK(ik_pose, ik_seed_state, timeout, consistency_limits,
                             solution, solution_callback, error_code, options);
@@ -304,17 +257,6 @@ bool TestKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose, 
                                                const kinematics::KinematicsQueryOptions &options) const
 {
     std::cout<<"In SearchPositionIK 4"<< std::endl;
-    std::cout<< "Commanded Pose: " << " z: " << ik_pose.position.z <<
-                                      " x: " << ik_pose.position.x <<
-                                      " y: " << ik_pose.position.y <<
-                                      std::endl;
-
-    std::cout<<  "IK Seed State: " << " d: " << ik_seed_state[0] <<
-                                      " q1: " << ik_seed_state[1] <<
-                                      " q2: " << ik_seed_state[2] <<
-                                      " q3: " << ik_seed_state[3] <<
-                                      std::endl;
-
     if (!initialized_)
     {
         ROS_ERROR_NAMED("kdl", "kinematics solver not initialized");
@@ -332,33 +274,34 @@ bool TestKinematicsPlugin::searchPositionIK(const geometry_msgs::Pose &ik_pose, 
     std::vector<std::vector<double>> solutions;
     if (!getIKSolutions(ik_pose, solutions))
     {
-        ROS_DEBUG_STREAM_NAMED(name_, "No solution whatsoever");
+        ROS_DEBUG_STREAM_NAMED("my_plugin", "No solution whatsoever");
         error_code.val = moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION;
         return false;
     }
     // find a single solution that is closest to ik_seed_state
     solution = getNearestSolutionToSeed(ik_seed_state, solutions);
-    std::cout<<"Solution: " ;
-    for (const auto & s : solution)
-        std::cout<< s << ", ";
-    std::cout<<"." << std::endl;
+
     if (!solution_callback.empty())
     {
-        std::cout<< "SOLUTION CALLBACK PROVIDED"<<std::endl;
-        solution_callback(ik_pose, solution, error_code);
-        if (error_code.val == moveit_msgs::MoveItErrorCodes::SUCCESS)
+        std::vector<std::vector<double>> collisonFreeSolutions;
+        for (const auto & sol : solutions)
         {
-            ROS_DEBUG_STREAM_NAMED("InHouse", "Solution passes callback");
-            return true;
+            solution_callback(ik_pose, sol, error_code);
+            if (error_code.val == moveit_msgs::MoveItErrorCodes::SUCCESS)
+                collisonFreeSolutions.push_back(sol);
+            else
+            {
+                error_code.val = moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION;
+                return false;
+            }
         }
-        else
-        {
-            ROS_DEBUG_STREAM_NAMED("Inhouse", "Solution has error code " << error_code);
-            return false;
-        }
+        if (!collisonFreeSolutions.empty())
+            solution = getNearestSolutionToSeed(ik_seed_state, collisonFreeSolutions);
     }
     else
     {
+        // find a single solution that is closest to ik_seed_state
+        solution = getNearestSolutionToSeed(ik_seed_state, solutions);
         error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
         return true; // no collision check callback provided
     }

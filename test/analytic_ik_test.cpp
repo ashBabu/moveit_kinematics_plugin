@@ -1,7 +1,7 @@
 #include <vector>
 #include <gtest/gtest.h>
 #include <moveit/rdf_loader/rdf_loader.h>
-#include <inhouse_moveit_kinematics_plugin/TestKinematicsPlugin.h>
+#include <moveit_kinematics_plugin/TestKinematicsPlugin.h>
 #include <geometry_msgs/Pose.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 
@@ -36,12 +36,10 @@ TEST(TESTSuite, AnalyticIkTest)
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     bool success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
 
-    start_state.setFromIK(joint_model_group, ik_pose);
-    move_group.setStartState(start_state);
-
-//    sak.getPositionIK(ik_pose, ik_seed_state, solution, error_code, options);
-    std::cout<<"Done"<<std::endl;
-//    EXPECT_TRUE(result);
+    if(!success)
+            std::cerr << "No joint plan found" << std::endl;
+        else
+        move_group.execute(my_plan); //blocking
 }
 
 int main(int argc, char **argv)
