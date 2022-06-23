@@ -16,7 +16,7 @@ class AnalyticIK:
             self.fkGenerator = GenerateFK()
             phi, x, y, z = self.fkGenerator.forward_kinematics()
         # self.coeffs = [-0.2, -0.24, 0.4385, 1.3248]  # wrt base_link
-        self.coeffs = [0.2, 0.25, 0.1415, -0.175]  # wrt arm_base
+        self.coeffs = [0.2, 0.25, 0.1415]  # wrt arm_base
         # x = -0.2 * cos(q1) - 0.2 * cos(q1 - q2) - 0.25 * cos(q1 - q2 + q3) + 0.4385
         # y = -0.2 * sin(q1) - 0.2 * sin(q1 - q2) - 0.25 * sin(q1 - q2 + q3)
         # self.coeffs are the coefficients of cos(q1), cos(q1-q2+q3) and constant term as
@@ -105,12 +105,11 @@ class AnalyticIK:
                 for qq in q1:
                     solution.append([qq, i, q])
         d = self.coeffs[3] - self.target[2]
-        solution = np.insert(np.array(solution), 0, d, axis=1)
-        return solution
+        return np.array(solution)
 
 
 if __name__ == "__main__":
-    # run the simulated robot in tmux
+    # run the simulated robot 
     rospy.init_node('analyticIK_node', anonymous=True)
     # target = [0.1, 0.25, 1.1]  # in base_link
     target = [0.45, -0.25, -0.40]  # in arm_base
