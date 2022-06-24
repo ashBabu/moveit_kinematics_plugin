@@ -52,38 +52,6 @@ class AnalyticIK:
         validQ1 = [num for num in q1 if self.isSolutionValid(num)]
         return validQ1
 
-    def get_q1_2(self, q2, q3, coeffs=None):
-        xt, yt, zt = self.target
-        if coeffs:
-            a1, a2, a3 = coeffs[0], coeffs[1], coeffs[2]
-        else:
-            a1, a2, a3 = self.coeffs[0], self.coeffs[1], self.coeffs[2]
-        beta = np.arctan2((xt - a3), yt)
-        K = ((xt - a3) ** 2 + yt ** 2 - a2 ** 2 - 2 * a1 * a2 * np.cos(q2 - q3))
-        den = 2 * a1 * np.sqrt((xt - a3) ** 2 + yt ** 2)
-        bb = np.arcsin(K / den)
-        q1 = [bb - beta + q2, np.pi - bb - beta + q2, bb - beta + 2 * np.pi + q2, 3 * np.pi - bb - beta + q2]
-        validQ1 = [num for num in q1 if self.isSolutionValid(num)]
-        return validQ1
-
-    def get_q1_1(self, q3, coeffs=None):
-        xt, yt, zt = self.target
-        if coeffs:
-            a1, a2, a3 = coeffs[0], coeffs[1], coeffs[2]
-        else:
-            a1, a2, a3 = self.coeffs[0], self.coeffs[1], self.coeffs[2]
-        beta = np.arctan2((xt - a3), yt)
-        K = ((xt - a3) ** 2 + yt ** 2 - a2 ** 2 - 2 * a1 * a2 * np.cos(q3))
-        den = (2 * a1) * np.sqrt((xt - a3) ** 2 + yt ** 2)
-        kk = K / (2 * a1)
-        dd = den / (2 * a1)
-        ss = [K/den, kk/dd, np.arcsin(kk / dd)]
-        bb = np.arcsin(K / den)
-        print(np.arcsin(kk / dd) - np.arcsin(K / den), "###")
-        q1 = [bb - beta, np.pi - bb - beta, bb - beta + 2 * np.pi, 3 * np.pi - bb - beta]
-        validQ1 = [num for num in q1 if self.isSolutionValid(num)]
-        return validQ1
-
     def isSolutionValid(self, q):
         # 2.01 bcoz, I dont want to go near the joint_limits
         if -np.pi / 2.01 <= q <= np.pi / 2.01:
